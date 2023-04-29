@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+picturemodel/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8.tar.gz
+picturemodel/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8/pipeline.config
+picturemodel/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8/checkpoint/checkpoint
+picturemodel/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8/checkpoint/ckpt-0.data-00000-of-00001
+picturemodel/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8/checkpoint/ckpt-0.index
+picturemodel/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8/saved_model/saved_model.pb
+picturemodel/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8/saved_model/variables/variables.data-00000-of-00001
+picturemodel/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8/saved_model/variables/variables.index
+picturemodel/American_Sign_Language_Letters.v1-v1.tensorflow.zip

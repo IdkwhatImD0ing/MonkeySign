@@ -12,4 +12,7 @@ export default defineConfig({
     }),
     react(),
   ],
+  build: {
+    target: "esnext", //browsers can handle the latest ES features
+  },
 });

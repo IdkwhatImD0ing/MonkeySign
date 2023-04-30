@@ -17,9 +17,11 @@ sio = SocketManager(app=app)
 
 @app.sio.on("send-frame")
 async def send_frame(image: dict):
-    # 1. take image, decode it, and send it to yolo client (Simon)
-    
-    # 2. yolo client sends bounding box (VARUN)
+    # 1. take image, decode it, and send it to yolo client
+    image = base64.b64decode(image["image"])
+    await sio.emit("receive-frame", image, room=image["room"])
+
+    # 2. yolo client sends bounding box
     # id, name, confidence, x, y, w, h = detection <- bounding box will have these values
 
     # 3. crop image based off of bounding box (Audrey)
@@ -31,4 +33,3 @@ async def send_frame(image: dict):
     # 5. send to frontend (Simon)
     # bounding box + index of max value in array
     await sio.emit("receive-frame", image, room=image["room"])
-

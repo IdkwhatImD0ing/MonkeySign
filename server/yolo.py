@@ -104,11 +104,6 @@ def get_bounding_box(yolo: YOLO, image: np.ndarray):
 
     for detection in results:
         no, name, confidence, x, y, w, h = detection
-        cx = x + (w / 2)  # center x
-        cy = y + (h / 2)  # center y
-
-        conf_sum += confidence
-        detection_count += 1
 
         bounding_boxes.append(
             {
@@ -128,5 +123,12 @@ def get_bounding_box(yolo: YOLO, image: np.ndarray):
     bounding_boxes.sort(key=lambda x: x["confidence"], reverse=True)
 
     if bounding_boxes:
-        return bounding_boxes[0]
+        tupleNew = (
+            bounding_boxes[0]["x"],
+            bounding_boxes[0]["y"],
+            bounding_boxes[0]["w"],
+            bounding_boxes[0]["h"],
+        )
+        return tupleNew
+        
     return None  # no bounding boxes found

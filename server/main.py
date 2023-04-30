@@ -45,10 +45,16 @@ def send_frame(image):
     bounding_boxes = get_bounding_box(yolo, image_np)
     print(bounding_boxes)
 
+    if(bounding_boxes == None):
+        return
+
     # 3. crop image based off of bounding box (Audrey)
     # resize to 244x244
-    image = crop_and_resize(image, bounding_boxes)
-    print(image)
+    image = crop_and_resize(image_np, bounding_boxes)
+    # Save this image, shape is (244, 244, 3)
+    image_pil = Image.fromarray((image).astype(np.uint8))
+    image_pil.save("test.jpg")
+    print(image.shape)
 
     # 4. send to classification client (Bill)
     # classification client returns array 26 long

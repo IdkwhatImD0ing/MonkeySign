@@ -23,7 +23,7 @@ class ASLInferrer:
         image = tf.convert_to_tensor(image, dtype=tf.float32)
         
         # Reshapes the image
-        image = tf.reshape(image, [1, 224, 224, 1])
+        image = tf.reshape(image, [1, 224, 224, 3])
         
         # Sets the input tensor for the interpreter
         self.interpreter.set_tensor(self.input_details[0]['index'], image)

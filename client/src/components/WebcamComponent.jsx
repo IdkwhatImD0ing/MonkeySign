@@ -5,7 +5,6 @@ import { io } from "socket.io-client";
 import * as handTrack from "handtrackjs";
 
 const socket = io('http://localhost:8000')
-const model = await handTrack.load()
 
 const letters = [
   "A",

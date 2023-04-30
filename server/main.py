@@ -56,7 +56,11 @@ def send_frame(image):
     print(result)
 
     # 5. send to frontend (Simon)
-    data = [bounding_boxes, result[0], result[2]]
+    data = {
+        "bounding_boxes": bounding_boxes,
+        "result": result[0],
+        "confidence": result[1],
+    }
 
     socketio.emit("receive-data", data)
 

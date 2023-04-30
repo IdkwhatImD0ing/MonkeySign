@@ -1,21 +1,15 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 import base64
-from fastapi_socketio import SocketManager
+from flask import Flask, render_template, jsonify
+from flask_socketio import SocketIO
+from flask_cors import CORS
 from yolo import YOLO, get_bounding_boxes
 from boundshrink import crop_and_resize
 from infer import ASLInferrer
 
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-sio = SocketManager(app=app)
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Initialize YOLO on server startup
 yolo = YOLO(
@@ -27,12 +21,12 @@ inferrer = ASLInferrer()
 yolo.size = 416
 yolo.confidence = 0.5
 
-@app.get("/")
-async def root():
+@app.route("/")
+def root():
     return {"message": "Hello World"}
 
-@app.sio.on("send-frame")
-async def send_frame(image: dict):
+@socketio.on("send-frame")
+def send_frame(image: dict):
     # 1. take image, decode it, and send it to yolo client
     image = base64.b64decode(image["image"])
     print(image)
@@ -54,4 +48,7 @@ async def send_frame(image: dict):
     # 5. send to frontend (Simon)
     data = [bounding_boxes, result[0], result[2]]
     
-    await sio.emit("receive-data", data)
+    socketio.emit("receive-data", data)
+
+if __name__ == '__main__':
+    socketio.run(app, host="0.0.0.0", port=8000)

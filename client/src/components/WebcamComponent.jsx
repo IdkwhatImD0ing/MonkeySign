@@ -1,59 +1,57 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import Webcam from "react-webcam";
-import axios from "axios";
-import { io } from "socket.io-client";
-import * as handTrack from "handtrackjs";
+import {useEffect, useState, useRef, useCallback} from 'react'
+import Webcam from 'react-webcam'
+import axios from 'axios'
+import {io} from 'socket.io-client'
+import * as handTrack from 'handtrackjs'
 
-const socket = io("http://localhost:8000");
+const socket = io('http://localhost:8000')
+const model = await handTrack.load()
 
 const WebcamComponent = () => {
   const videoConstraints = {
     width: 1920,
     height: 1080,
-    facingMode: "user",
-  };
-  const webcamRef = useRef(null);
+    facingMode: 'user',
+  }
+  const webcamRef = useRef(null)
 
   const sendImage = useCallback(() => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    let image = new Image();
-    let canvas = document.getElementById("canvas");
-    let context = canvas.getContext("2d");
-    image.src = imageSrc;
-    socket.emit("send-frame", imageSrc);
+    const imageSrc = webcamRef.current.getScreenshot()
+    let image = new Image()
+    let canvas = document.getElementById('canvas')
+    let context = canvas.getContext('2d')
+    image.src = imageSrc
+    socket.emit('send-frame', imageSrc)
     // Load the model.
-    handTrack.load().then((model) => {
-      // detect objects in the image.
-      console.log("model loaded");
-      model.detect(image).then((predictions) => {
-        console.log("Predictions: ", predictions);
-        model.renderPredictions(predictions, canvas, context, image);
-      });
-    });
-  }, [webcamRef]);
+
+    model.detect(image).then((predictions) => {
+      console.log('Predictions: ', predictions)
+      model.renderPredictions(predictions, canvas, context, image)
+    })
+  }, [webcamRef])
 
   useEffect(() => {
     const interval = setInterval(() => {
-      sendImage();
-    }, 1000 / 24);
-    return () => clearInterval(interval);
-  }, [sendImage]);
+      sendImage()
+    }, 1000 / 24)
+    return () => clearInterval(interval)
+  }, [sendImage])
 
-  const [currentGoal, setCurrentGoal] = useState("A");
-  const [gameStart, setGameStart] = useState(true);
-  const [timer, setTimer] = useState(30);
-  const [score, setScore] = useState(0);
+  const [currentGoal, setCurrentGoal] = useState('A')
+  const [gameStart, setGameStart] = useState(true)
+  const [timer, setTimer] = useState(30)
+  const [score, setScore] = useState(0)
   const [responseObject, setResponseObject] = useState({
     currentBox: null,
     predicted: null,
     accuracy: null,
-  });
+  })
 
   useEffect(() => {
     timer > 0 &&
       setTimeout(() => setTimer(timer - 1), 1000) &&
-      setTimeout(() => setGameStart(false), 31000);
-  }, [timer]);
+      setTimeout(() => setGameStart(false), 31000)
+  }, [timer])
 
   return (
     <div className="font-lexend-deca font-light">
@@ -90,9 +88,9 @@ const WebcamComponent = () => {
           <div className="text-[48px] font-semibold">Score: {score}</div>
           <button
             onClick={() => {
-              setGameStart(true);
-              setTimer(30);
-              setScore(0);
+              setGameStart(true)
+              setTimer(30)
+              setScore(0)
             }}
             className="self-center sm:self-start bg-[#fcd9fc] hover:bg-[#db8fdd] border border-black rounded-lg px-8 py-4 mt-8"
           >
@@ -101,7 +99,7 @@ const WebcamComponent = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default WebcamComponent;
+export default WebcamComponent

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import base64
 from fastapi_socketio import SocketManager
 
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,

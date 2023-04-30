@@ -14,38 +14,54 @@ const WebcamComponent = () => {
     facingMode: 'user',
   }
   const webcamRef = useRef(null)
+  const predRef = useRef(null)
 
-  const sendImage = useCallback(() => {
+  const sendImage = () => {
     const imageSrc = webcamRef.current.getScreenshot()
-    let image = new Image()
+    socket.emit('send-frame', {
+      image: imageSrc,
+      predictions: predRef.current,
+    })
+  }
+
+  const predict = () => {
+    if (!webcamRef.current) return
+    const imageSrc = webcamRef.current.getScreenshot()
+    const image = new Image()
+    image.src = imageSrc
     let canvas = document.getElementById('canvas')
     let context = canvas.getContext('2d')
-    image.src = imageSrc
+    image.onload = () => {
+      model.detect(image).then((predictions) => {
+        // Remove the prediction where class == 5
+        predictions = predictions.filter((prediction) => prediction.class != 5)
+        // Truncate it to 1 prediction
+        predictions = predictions.slice(0, 1)
+        predRef.current = predictions
 
-    // Load the model.
-
-    model.detect(image).then((predictions) => {
-      // Remove the prediction where class == 5
-      predictions = predictions.filter((prediction) => prediction.class != 5)
-      // Truncate it to 1 prediction
-      predictions = predictions.slice(0, 1)
-      socket.emit('send-frame', {
-        predictions: predictions,
-        image: imageSrc,
+        const emptyImage = new Image()
+        emptyImage.width = image.width
+        emptyImage.height = image.height
+        model.renderPredictions(predictions, canvas, context, emptyImage)
       })
-      model.renderPredictions(predictions, canvas, context, image)
-    })
-  }, [webcamRef])
+    }
+  }
 
   useEffect(() => {
     const interval = setInterval(() => {
+      predict()
+    }, 1000 / 40)
+    const interval2 = setInterval(() => {
       sendImage()
-    }, 1000 / 24)
+    }, 1000 / 10)
     socket.on('response', (data) => {
       console.log(data)
       setResponseObject(data)
     })
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      clearInterval(interval2)
+    }
   }, [sendImage])
 
   const [currentGoal, setCurrentGoal] = useState('A')

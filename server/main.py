@@ -27,6 +27,9 @@ inferrer = ASLInferrer()
 yolo.size = 416
 yolo.confidence = 0.5
 
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
 
 @app.sio.on("send-frame")
 async def send_frame(image: dict):

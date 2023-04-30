@@ -47,7 +47,6 @@ const WebcamComponent = () => {
 
   const sendImage = () => {
     const imageSrc = webcamRef.current.getScreenshot()
-    console.log(predRef.current)
     socket.emit('send-frame', {
       image: imageSrc,
       predictions: predRef.current,

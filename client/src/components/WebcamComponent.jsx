@@ -5,6 +5,7 @@ import {io} from 'socket.io-client'
 import * as handTrack from 'handtrackjs'
 
 const socket = io('http://localhost:8000')
+const model = await handTrack.load()
 
 const letters = [
   'A',
@@ -42,10 +43,11 @@ const WebcamComponent = () => {
     facingMode: 'user',
   }
   const webcamRef = useRef(null)
-  const predRef = useRef(null)
+  const predRef = useRef([])
 
   const sendImage = () => {
     const imageSrc = webcamRef.current.getScreenshot()
+    console.log(predRef.current)
     socket.emit('send-frame', {
       image: imageSrc,
       predictions: predRef.current,

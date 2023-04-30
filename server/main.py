@@ -2,7 +2,7 @@ import base64
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO
 from flask_cors import CORS
-from yolo import YOLO, get_bounding_boxes
+from yolo import YOLO, get_bounding_box
 from boundshrink import crop_and_resize
 from infer import ASLInferrer
 from PIL import Image
@@ -42,7 +42,7 @@ def send_frame(image):
     image_np = np.array(image)
 
     # 2. yolo client sends bounding box
-    bounding_boxes = get_bounding_boxes(yolo, image_np)
+    bounding_boxes = get_bounding_box(yolo, image_np)
     print(bounding_boxes)
 
     # 3. crop image based off of bounding box (Audrey)

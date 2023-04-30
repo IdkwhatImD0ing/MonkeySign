@@ -5,6 +5,10 @@ from flask_cors import CORS
 from yolo import YOLO, get_bounding_boxes
 from boundshrink import crop_and_resize
 from infer import ASLInferrer
+from PIL import Image
+import io
+import numpy as np
+import re
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -28,13 +32,17 @@ def root():
 
 
 @socketio.on("send-frame")
-def send_frame(image: dict):
+def send_frame(image):
     # 1. take image, decode it, and send it to yolo client
-    image = base64.b64decode(image)
-    print(image)
+    data_url_pattern = re.compile(r"data:image/(.*);base64,")
+    if data_url_pattern.match(image):
+        image = data_url_pattern.sub("", image)
+    base64_decoded = base64.b64decode(image)
+    image = Image.open(io.BytesIO(base64_decoded))
+    image_np = np.array(image)
 
     # 2. yolo client sends bounding box
-    bounding_boxes = get_bounding_boxes(yolo, image)
+    bounding_boxes = get_bounding_boxes(yolo, image_np)
     print(bounding_boxes)
 
     # 3. crop image based off of bounding box (Audrey)

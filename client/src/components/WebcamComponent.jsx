@@ -1,24 +1,24 @@
-import { useEffect, useRef, useCallback } from "react";
-import Webcam from "react-webcam";
-import axios from "axios";
-import { io } from "socket.io-client";
+import {useEffect, useRef, useCallback} from 'react'
+import Webcam from 'react-webcam'
+import axios from 'axios'
+import {io} from 'socket.io-client'
 
-const socket = io("http://localhost:8000");
+const socket = io('http://localhost:8000')
 
 const WebcamComponent = () => {
   const videoConstraints = {
     width: 1920,
     height: 1080,
-    facingMode: "user",
-  };
+    facingMode: 'user',
+  }
 
-  const webcamRef = useRef(null);
+  const webcamRef = useRef(null)
 
   const sendImage = useCallback(() => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    console.log(imageSrc);
-    socket.emit("send_frame", imageSrc);
-  }, [webcamRef]);
+    const imageSrc = webcamRef.current.getScreenshot()
+    console.log(imageSrc)
+    socket.emit('send-frame', imageSrc)
+  }, [webcamRef])
 
   return (
     <div>
@@ -32,7 +32,7 @@ const WebcamComponent = () => {
         send to backend
       </button>
     </div>
-  );
-};
+  )
+}
 
-export default WebcamComponent;
+export default WebcamComponent

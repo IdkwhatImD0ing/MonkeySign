@@ -86,7 +86,7 @@ class YOLO:
         return iw, ih, inference_time, results
 
 
-def get_bounding_boxes(yolo: YOLO, image: np.ndarray):
+def get_bounding_box(yolo: YOLO, image: np.ndarray):
     """
     Returns a list of bounding boxes for the given image
     :param yolo: YOLO object
@@ -100,7 +100,7 @@ def get_bounding_boxes(yolo: YOLO, image: np.ndarray):
         % (round(inference_time, 2), len(results))
     )
 
-    output = []
+    bounding_boxes = []
 
     for detection in results:
         no, name, confidence, x, y, w, h = detection
@@ -110,7 +110,7 @@ def get_bounding_boxes(yolo: YOLO, image: np.ndarray):
         conf_sum += confidence
         detection_count += 1
 
-        output.append(
+        bounding_boxes.append(
             {
                 "id": no,
                 "name": name,
@@ -124,4 +124,9 @@ def get_bounding_boxes(yolo: YOLO, image: np.ndarray):
 
         print("%s with %s confidence" % (name, round(confidence, 2)))
 
-    return output
+    # return the bounding boxes with the highest confidence
+    bounding_boxes.sort(key=lambda x: x["confidence"], reverse=True)
+
+    if bounding_boxes:
+        return bounding_boxes[0]
+    return None  # no bounding boxes found

@@ -30,7 +30,7 @@ def root():
 @socketio.on("send-frame")
 def send_frame(image: dict):
     # 1. take image, decode it, and send it to yolo client
-    image = base64.b64decode(image["image"])
+    image = base64.b64decode(image)
     print(image)
 
     # 2. yolo client sends bounding box

@@ -8,8 +8,8 @@ const socket = io("http://localhost:8000");
 
 const WebcamComponent = () => {
   const videoConstraints = {
-    width: 1920,
-    height: 1080,
+    width: 1280,
+    height: 720,
     facingMode: "user",
   };
   const webcamRef = useRef(null);
@@ -17,16 +17,14 @@ const WebcamComponent = () => {
   const sendImage = useCallback(() => {
     const imageSrc = webcamRef.current.getScreenshot();
     let image = new Image();
-    let canvas = document.getElementById("canvas");
-    let context = canvas.getContext("2d");
     image.src = imageSrc;
     socket.emit("send-frame", imageSrc);
     // Load the model.
     handTrack.load().then((model) => {
       // detect objects in the image.
-      console.log("model loaded");
       model.detect(image).then((predictions) => {
-        console.log("Predictions: ", predictions);
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
         model.renderPredictions(predictions, canvas, context, image);
       });
     });
@@ -43,11 +41,6 @@ const WebcamComponent = () => {
   const [gameStart, setGameStart] = useState(true);
   const [timer, setTimer] = useState(30);
   const [score, setScore] = useState(0);
-  const [responseObject, setResponseObject] = useState({
-    currentBox: null,
-    predicted: null,
-    accuracy: null,
-  });
 
   useEffect(() => {
     timer > 0 &&
@@ -60,7 +53,7 @@ const WebcamComponent = () => {
       {timer != 0 ? (
         <div className="flex flex-col lg:flex-row items-center justify-between lg:gap-[100px]">
           <div className="flex flex-col items-center w-full">
-            <div className="text-[72px] font-bold">{currentGoal}</div>
+            <div className="text-[100px] font-bold">{currentGoal}</div>
             <div className="flex justify-between px-[2px] w-full">
               <div>Timer: {timer}</div>
               <div>Score: {score}</div>
@@ -76,7 +69,7 @@ const WebcamComponent = () => {
               mirrored={true}
               className=""
             />
-            <canvas id="canvas" className="mt-[-339px] z-10"></canvas>
+            <canvas id="canvas" className=""></canvas>
             <button
               className="self-center bg-[#fcd9fc] hover:bg-[#db8fdd] border border-black rounded-lg px-8 py-4 mt-8"
               onClick={() => sendImage()}

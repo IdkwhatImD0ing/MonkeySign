@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import Webcam from "react-webcam";
+import axios from "axios";
 
 const WebcamComponent = () => {
   const videoConstraints = {
@@ -12,14 +13,21 @@ const WebcamComponent = () => {
 
   const capture = useCallback(() => {
     const imageSrc = webcamRef.current.getScreenshot();
-
-    // fetch("http://localhost:3000/api/send-frame", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({ imageSrc }),
-    // });
+    console.log(imageSrc);
+    // axios
+    //   .post(
+    //     "http://localhost:8000/send-frame",
+    //     { imageSrc },
+    //     {
+    //       headers: { "Content-Type": "application/json" },
+    //     }
+    //   )
+    //   .then((response) => {
+    //     console.log(response.data);
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //   });
   }, [webcamRef]);
 
   useEffect(() => {

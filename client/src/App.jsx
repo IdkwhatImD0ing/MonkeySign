@@ -14,6 +14,7 @@ function App() {
           <Route path="/play" element={<Play />} />
         </Routes>
       </main>
+      <img src="./corner.png" alt="corner" className="fixed bottom-0 z-[-10]" />
     </BrowserRouter>
   );
 }

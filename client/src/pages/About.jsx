@@ -30,16 +30,16 @@ const About = () => {
     },
   ];
   return (
-    <div className="font-lexend-deca h-[calc(100vh-80px)">
-      <div className="flex flex-col mt-[24px] mx-[5%] sm:mx-[10%] max-w-[700px]">
+    <div className="font-lexend-deca h-[calc(100vh-80px) pt-[64px]">
+      <div className="flex flex-col mx-[5%] sm:mx-[10%] cursor-default">
         <div className="font-normal text-[#cd75cf]">monkeysign squad</div>
         <div className="text-[24px]">meet the talented team</div>
-        <div className="font-light text-[#9e9e9e]">
+        <div className="font-light text-[#9e9e9e] max-w-[700px]">
           Our team is made up of experienced developers and designers who are
           passionate about creating innovative solutions for learning American
           Sign Language.
         </div>
-        <div className="flex justify-center flex-wrap md:flex-nowrap text-center mt-[24px] gap-[24px]">
+        <div className="flex justify-center sm:justify-start flex-wrap text-center mt-[24px] gap-[48px]">
           {team.map((member, index) => (
             <div
               key={index}
@@ -60,7 +60,7 @@ const About = () => {
             </div>
           ))}
         </div>
-        <div className="font-light text-[#9e9e9e] mt-[24px] mb-[24px]">
+        <div className="font-light text-[#9e9e9e] mt-[24px] mb-[24px] max-w-[700px]">
           From designing the user interface to developing the back-end
           functionality, each member of our team played a crucial role in
           bringing MonkeySign to life. Our team members bring a diverse set of

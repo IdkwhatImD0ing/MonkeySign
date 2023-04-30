@@ -11,7 +11,7 @@ const About = () => {
       name: "Audrey Chen",
       school: "MSU",
       major: "CE",
-      role: "Machine Learning",
+      role: "ML/Full Stack",
       img: "./audrey.jpg",
     },
     {

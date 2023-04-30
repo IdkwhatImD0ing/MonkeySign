@@ -1,6 +1,9 @@
 import { useEffect, useRef, useCallback } from "react";
 import Webcam from "react-webcam";
 import axios from "axios";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:8000");
 
 const WebcamComponent = () => {
   const videoConstraints = {
@@ -11,31 +14,11 @@ const WebcamComponent = () => {
 
   const webcamRef = useRef(null);
 
-  const capture = useCallback(() => {
+  const sendImage = useCallback(() => {
     const imageSrc = webcamRef.current.getScreenshot();
     console.log(imageSrc);
-    // axios
-    //   .post(
-    //     "http://localhost:8000/send-frame",
-    //     { imageSrc },
-    //     {
-    //       headers: { "Content-Type": "application/json" },
-    //     }
-    //   )
-    //   .then((response) => {
-    //     console.log(response.data);
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //   });
+    socket.emit("send_frame", imageSrc);
   }, [webcamRef]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      capture();
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [capture]);
 
   return (
     <div>
@@ -45,6 +28,9 @@ const WebcamComponent = () => {
         screenshotFormat="image/jpeg"
         videoConstraints={videoConstraints}
       />
+      <button className="bg-red-400" onClick={() => sendImage()}>
+        send to backend
+      </button>
     </div>
   );
 };

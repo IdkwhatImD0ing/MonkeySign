@@ -8,7 +8,7 @@ from infer import ASLInferrer
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-app.config['SECRET_KEY'] = 'secret!'
+app.config["SECRET_KEY"] = "secret!"
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Initialize YOLO on server startup
@@ -21,9 +21,11 @@ inferrer = ASLInferrer()
 yolo.size = 416
 yolo.confidence = 0.5
 
+
 @app.route("/")
 def root():
     return {"message": "Hello World"}
+
 
 @socketio.on("send-frame")
 def send_frame(image: dict):
@@ -47,8 +49,9 @@ def send_frame(image: dict):
 
     # 5. send to frontend (Simon)
     data = [bounding_boxes, result[0], result[2]]
-    
+
     socketio.emit("receive-data", data)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=8000)

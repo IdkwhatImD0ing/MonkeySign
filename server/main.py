@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import base64
 from fastapi_socketio import SocketManager
+import argparse
+import glob
+import os
+from yolo import YOLO, get_bounding_boxes
 
 
 app = FastAPI()
@@ -15,6 +19,15 @@ app.add_middleware(
 
 sio = SocketManager(app=app)
 
+# Initialize YOLO on server startup
+yolo = YOLO(
+    "models/cross-hands-yolov4-tiny.cfg",
+    "models/cross-hands-yolov4-tiny.weights",
+    ["hand"],
+)
+yolo.size = 416
+yolo.confidence = 0.5
+
 
 @app.sio.on("send-frame")
 async def send_frame(image: dict):
@@ -23,7 +36,7 @@ async def send_frame(image: dict):
     await sio.emit("receive-frame", image, room=image["room"])
 
     # 2. yolo client sends bounding box
-    # id, name, confidence, x, y, w, h = detection <- bounding box will have these values
+    bounding_boxes = get_bounding_boxes(yolo, image)
 
     # 3. crop image based off of bounding box (Audrey)
     # resize to 244x244

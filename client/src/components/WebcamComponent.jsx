@@ -4,7 +4,8 @@ import axios from "axios";
 import { io } from "socket.io-client";
 import * as handTrack from "handtrackjs";
 
-const socket = io("http://localhost:8000");
+const socket = io('http://localhost:8000')
+const model = await handTrack.load()
 
 const letters = [
   "A",
@@ -39,10 +40,11 @@ const WebcamComponent = () => {
   const videoConstraints = {
     width: 1920,
     height: 1080,
-    facingMode: "user",
-  };
-  const webcamRef = useRef(null);
-  const predRef = useRef(null);
+
+    facingMode: 'user',
+  }
+  const webcamRef = useRef(null)
+  const predRef = useRef([])
 
   const sendImage = () => {
     const imageSrc = webcamRef.current.getScreenshot();

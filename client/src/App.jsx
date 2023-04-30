@@ -7,7 +7,7 @@ function App() {
   return (
     <BrowserRouter>
       <Navbar />
-      <main className="w-full h-[calc(100vh-180px)]">
+      <main className="w-full h-full relative">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />

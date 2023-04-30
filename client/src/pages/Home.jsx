@@ -3,15 +3,17 @@ import { Link } from "react-router-dom";
 
 const Home = () => {
   return (
-    <div className="font-lexend-deca h-[calc(100vh-80px)]">
+    <div className="font-lexend-deca">
       <div className="h-[calc(100vh-80px)]">
         <div className="flex text-center sm:text-left items-center mx-[5%] sm:mx-[10%] justify-between cursor-default">
           <div className="flex flex-col justify-center">
-            <div className="text-[12px] xs:text-[16px] sm:mb-[-20px] text-[#cd75cf] mt-[150px]">
+            <div className="text-[12px] sm:text-[16px] sm:mb-[-20px] text-[#cd75cf] mt-[150px]">
               powered by machine learning
             </div>
-            <div className="text-[32px] sm:text-[72px]">monkeysign</div>
-            <div className="text-[#9e9e9e] font-light">
+            <div className="text-[32px] xs:text-[48px] sm:text-[72px]">
+              monkeysign
+            </div>
+            <div className="text-[#9e9e9e] text-[12px] sm:text-[16px] font-light">
               the ultimate platform for learning and practicing American Sign
               Language (ASL)
             </div>
@@ -32,7 +34,7 @@ const Home = () => {
         </div>
       </div>
       <div className="h-[500px]">
-        <div className="flex text-center gap-[64px] lg:text-right items-center mx-[5%] sm:mx-[10%] justify-between cursor-default pb-[100px]">
+        <div className="flex text-center gap-[64px] lg:text-right items-center mx-[5%] sm:mx-[10%] justify-between cursor-default pb-[250px]">
           <div className="lg:block hidden">
             <img
               src="./learn-asl.png"
@@ -41,7 +43,7 @@ const Home = () => {
             />
           </div>
           <div className="flex flex-col justify-center">
-            <div className="text-[12px] xs:text-[16px] text-[#cd75cf] mt-[100px]">
+            <div className="text-[12px] xs:text-[16px] text-[#cd75cf] mt-[50px]">
               learning asl!
             </div>
             <div className="text-[32px] sm:text-[36px]">what are we about?</div>

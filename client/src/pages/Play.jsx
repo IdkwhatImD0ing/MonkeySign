@@ -6,7 +6,7 @@ const Play = () => {
   const [showModal, setShowModal] = useState(true);
   const [webcam, setWebcam] = useState(false);
   return (
-    <div>
+    <div className="min-h-[calc(100vh-80px-60px)]">
       <div className="">{webcam ? <PlayComponent /> : <></>}</div>
 
       <div className={`relative z-10 ${showModal ? "" : "hidden"}`}>

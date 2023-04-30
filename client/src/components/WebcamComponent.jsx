@@ -5,14 +5,7 @@ import { io } from "socket.io-client";
 import * as handTrack from "handtrackjs";
 
 const socket = io("http://localhost:8000");
-const modelParams = {
-  flipHorizontal: false, // flip e.g for video
-  imageScaleFactor: 0.7, // reduce input image size .
-  maxNumBoxes: 1, // maximum number of boxes to detect
-  iouThreshold: 0.5, // ioU threshold for non-max suppression
-  scoreThreshold: 0.79, // confidence threshold for predictions.
-  class: [1, 2],
-};
+const model = await handTrack.load();
 
 const WebcamComponent = () => {
   const videoConstraints = {
@@ -30,11 +23,10 @@ const WebcamComponent = () => {
     image.src = imageSrc;
     socket.emit("send-frame", imageSrc);
     // Load the model.
-    handTrack.load(modelParams).then((model) => {
-      model.detect(image).then((predictions) => {
-        console.log("Predictions: ", predictions);
-        model.renderPredictions(predictions, canvas, context, image);
-      });
+
+    model.detect(image).then((predictions) => {
+      console.log("Predictions: ", predictions);
+      model.renderPredictions(predictions, canvas, context, image);
     });
   }, [webcamRef]);
 

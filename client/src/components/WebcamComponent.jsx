@@ -21,11 +21,18 @@ const WebcamComponent = () => {
     let canvas = document.getElementById('canvas')
     let context = canvas.getContext('2d')
     image.src = imageSrc
-    socket.emit('send-frame', imageSrc)
+
     // Load the model.
 
     model.detect(image).then((predictions) => {
-      console.log('Predictions: ', predictions)
+      // Remove the prediction where class == 5
+      predictions = predictions.filter((prediction) => prediction.class != 5)
+      // Truncate it to 1 prediction
+      predictions = predictions.slice(0, 1)
+      socket.emit('send-frame', {
+        predictions: predictions,
+        image: imageSrc,
+      })
       model.renderPredictions(predictions, canvas, context, image)
     })
   }, [webcamRef])
@@ -34,6 +41,10 @@ const WebcamComponent = () => {
     const interval = setInterval(() => {
       sendImage()
     }, 1000 / 24)
+    socket.on('response', (data) => {
+      console.log(data)
+      setResponseObject(data)
+    })
     return () => clearInterval(interval)
   }, [sendImage])
 
@@ -62,6 +73,10 @@ const WebcamComponent = () => {
             <div className="flex justify-between px-[2px] w-full">
               <div>Timer: {timer}</div>
               <div>Score: {score}</div>
+            </div>
+            <div className="flex justify-between px-[2px] w-full">
+              <div>Predicted Box: {responseObject.result}</div>
+              <div>Accuracy: {responseObject.confidence}</div>
             </div>
           </div>
 

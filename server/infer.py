@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import cv2
 
 class ASLInferrer:
     def __init__(self):
@@ -17,14 +18,13 @@ class ASLInferrer:
         return image
     
     def infer(self, image=None):
-        # Preprocesses the image
-        image = self.preprocess(image)
+               
         # Converts the image to a tensor
         image = tf.convert_to_tensor(image, dtype=tf.float32)
         
         # Reshapes the image
         image = tf.reshape(image, [1, 224, 224, 3])
-        
+
         # Sets the input tensor for the interpreter
         self.interpreter.set_tensor(self.input_details[0]['index'], image)
         

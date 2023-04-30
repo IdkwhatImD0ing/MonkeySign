@@ -7,13 +7,14 @@ function App() {
   return (
     <BrowserRouter>
       <Navbar />
-      <main className="w-full h-[calc(100vh-180px)]">
+      <main className="w-full h-full relative">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/play" element={<Play />} />
         </Routes>
       </main>
+      <img src="./corner.png" alt="corner" className="fixed bottom-0 z-[-10]" />
     </BrowserRouter>
   );
 }

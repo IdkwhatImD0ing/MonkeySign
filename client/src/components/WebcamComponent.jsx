@@ -5,11 +5,19 @@ import { io } from "socket.io-client";
 import * as handTrack from "handtrackjs";
 
 const socket = io("http://localhost:8000");
+const modelParams = {
+  flipHorizontal: false, // flip e.g for video
+  imageScaleFactor: 0.7, // reduce input image size .
+  maxNumBoxes: 1, // maximum number of boxes to detect
+  iouThreshold: 0.5, // ioU threshold for non-max suppression
+  scoreThreshold: 0.79, // confidence threshold for predictions.
+  class: [1, 2],
+};
 
 const WebcamComponent = () => {
   const videoConstraints = {
-    width: 1280,
-    height: 720,
+    width: 1920,
+    height: 1080,
     facingMode: "user",
   };
   const webcamRef = useRef(null);
@@ -17,14 +25,14 @@ const WebcamComponent = () => {
   const sendImage = useCallback(() => {
     const imageSrc = webcamRef.current.getScreenshot();
     let image = new Image();
+    let canvas = document.getElementById("canvas");
+    let context = canvas.getContext("2d");
     image.src = imageSrc;
     socket.emit("send-frame", imageSrc);
     // Load the model.
-    handTrack.load().then((model) => {
-      // detect objects in the image.
+    handTrack.load(modelParams).then((model) => {
       model.detect(image).then((predictions) => {
-        const canvas = document.getElementById("canvas");
-        const context = canvas.getContext("2d");
+        console.log("Predictions: ", predictions);
         model.renderPredictions(predictions, canvas, context, image);
       });
     });
@@ -41,6 +49,11 @@ const WebcamComponent = () => {
   const [gameStart, setGameStart] = useState(true);
   const [timer, setTimer] = useState(30);
   const [score, setScore] = useState(0);
+  const [responseObject, setResponseObject] = useState({
+    currentBox: null,
+    predicted: null,
+    accuracy: null,
+  });
 
   useEffect(() => {
     timer > 0 &&

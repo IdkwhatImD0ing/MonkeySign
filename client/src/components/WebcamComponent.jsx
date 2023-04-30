@@ -21,11 +21,14 @@ const WebcamComponent = () => {
     let canvas = document.getElementById('canvas')
     let context = canvas.getContext('2d')
     image.src = imageSrc
-    socket.emit('send-frame', imageSrc)
+
     // Load the model.
 
     model.detect(image).then((predictions) => {
-      console.log('Predictions: ', predictions)
+      socket.emit('send-frame', {
+        predictions: predictions,
+        image: imageSrc,
+      })
       model.renderPredictions(predictions, canvas, context, image)
     })
   }, [webcamRef])

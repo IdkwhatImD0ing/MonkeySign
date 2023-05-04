@@ -16,22 +16,10 @@ class ASLInferrer {
     this.model = await tf.loadGraphModel(modelUrl)
   }
 
-  async infer(image = null) {
+  async infer(tensor) {
     return new Promise(async (resolve) => {
-      // Preprocess the image
-      const preprocessedImage = preprocess(image)
-      // Resize to 224, 224
-      let resizedImage = tf.image.resizeBilinear(preprocessedImage, [224, 224])
-
-      // Add a dimension to get a batch shape
-      resizedImage = tf.tensor4d(
-        Array.from(resizedImage.dataSync()),
-        [1, 224, 224, 3],
-        'float32',
-      )
-
       // Runs the inference
-      const prediction = this.model.execute(resizedImage)
+      const prediction = this.model.execute(tensor)
 
       const array = await prediction.data()
       const predictionIndex = array.indexOf(Math.max(...array))

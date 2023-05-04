@@ -2,6 +2,7 @@ import {useEffect, useState, useRef} from 'react'
 import Webcam from 'react-webcam'
 import ASLInferrer from './ASLInferrer'
 import * as handTrack from 'handtrackjs'
+import * as tf from '@tensorflow/tfjs'
 
 const letters = [
   'A',
@@ -45,25 +46,9 @@ const WebcamComponent = () => {
   const webcamRef = useRef(null)
   const predRef = useRef([])
 
-  const sendImage = async () => {
-    if (!webcamRef.current || !aslInferrer) return
-    const imageSrc = webcamRef.current.getScreenshot()
-    const image = new Image()
-    image.src = imageSrc
-
-    image.onload = async () => {
-      const [prediction, confidence] = await aslInferrer.infer(image)
-
-      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-      const responseObject = {
-        result: alphabet[prediction],
-        confidence: confidence,
-      }
-
-      // Process the responseObject as needed
-      // ...
-    }
-  }
+  // Game logic
+  const lastPrediction = useRef(null)
+  const lastGoalChecked = useRef(null)
 
   const predict = () => {
     if (!webcamRef.current) return
@@ -75,17 +60,58 @@ const WebcamComponent = () => {
 
     image.onload = () => {
       model.detect(image).then((predictions) => {
-        console.log('Predictions: ', predictions)
+        if (predictions.length === 0 || predictions[0].bbox == undefined) return
+        console.log(predictions)
         // Remove the prediction where class == 5
         predictions = predictions.filter((prediction) => prediction.class != 5)
         // Truncate it to 1 prediction
-        predictions = predictions.slice(0, 3)
+        predictions = predictions.slice(0, 1)
         predRef.current = predictions
 
+        // Crop image based on bounding box [x,y,width,height]
+        const [x, y, width, height] = predictions[0].bbox
+
+        // Convert the image to a tensor
+        const imageTensor = tf.browser.fromPixels(image)
+
+        // Slice the tensor based on the bounding box coordinates
+        const croppedTensor = imageTensor.slice(
+          [Math.round(y), Math.round(x), 0],
+          [Math.round(height), Math.round(width), 3],
+        )
+
+        // Resize the tensor to 224x224
+        const resizedTensor = tf.image.resizeBilinear(croppedTensor, [224, 224])
+
+        // Reshape the tensor to 1x224x224x3
+        const reshapedTensor = resizedTensor.expandDims(0)
         const emptyImage = new Image()
         emptyImage.width = image.width
         emptyImage.height = image.height
-        model.renderPredictions(predictions, canvas, context, emptyImage)
+
+        aslInferrer.infer(reshapedTensor).then((prediction) => {
+          predictions[0].label = letters[prediction[0]]
+          predictions[0].score = prediction[1].toFixed(2)
+          model.renderPredictions(predictions, canvas, context, emptyImage)
+
+          // Game logic
+          if (
+            predictions[0].label === currentGoal &&
+            predictions[0].label !== lastPrediction.current &&
+            currentGoal !== lastGoalChecked.current
+          ) {
+            setScore((prevScore) => prevScore + 1)
+            setCurrentGoal(letters[Math.floor(Math.random() * letters.length)])
+            lastGoalChecked.current = currentGoal
+          }
+
+          lastPrediction.current = predictions[0].label
+
+          setResponseObject({
+            result: predictions[0].label,
+            confidence: predictions[0].score,
+          })
+        })
       })
     }
   }
@@ -93,21 +119,9 @@ const WebcamComponent = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       predict()
-    }, 1000 / 30)
-    const interval2 = setInterval(() => {
-      sendImage()
-    }, 1000 / 3)
-    // socket.on('response', (data) => {
-    //   if (data.result === currentGoal) {
-    //     setScore((prevScore) => prevScore + 1)
-    //     setCurrentGoal(letters[Math.floor(Math.random() * letters.length)])
-    //   } else {
-    //     setResponseObject(data)
-    //   }
-    // })
+    }, 1000 / 60)
     return () => {
       clearInterval(interval)
-      clearInterval(interval2)
     }
   }, [])
 

@@ -5,7 +5,6 @@ import {io} from 'socket.io-client'
 import * as handTrack from 'handtrackjs'
 
 const socket = io('http://localhost:8000')
-const model = await handTrack.load()
 
 const letters = [
   'A',
@@ -35,11 +34,12 @@ const letters = [
   'Y',
   'Z',
 ]
-// const model = await handTrack.load();
+const model = await handTrack.load()
 const WebcamComponent = () => {
   const videoConstraints = {
     width: 1920,
     height: 1080,
+
     facingMode: 'user',
   }
   const webcamRef = useRef(null)
@@ -65,7 +65,7 @@ const WebcamComponent = () => {
         // Remove the prediction where class == 5
         predictions = predictions.filter((prediction) => prediction.class != 5)
         // Truncate it to 1 prediction
-        predictions = predictions.slice(0, 1)
+        predictions = predictions.slice(0, 3)
         predRef.current = predictions
 
         const emptyImage = new Image()

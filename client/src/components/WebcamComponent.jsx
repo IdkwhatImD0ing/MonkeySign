@@ -82,10 +82,12 @@ const WebcamComponent = () => {
     }, 1000 / 40)
     const interval2 = setInterval(() => {
       sendImage()
-    }, 1000 / 10)
+    }, 1000 / 3)
     socket.on('response', (data) => {
       if (data.result === currentGoal) {
-        setScore(score + 1)
+        console.log(data.result)
+        console.log(currentGoal)
+        setScore((prevScore) => prevScore + 1)
         setCurrentGoal(letters[Math.floor(Math.random() * letters.length)])
       } else {
         setResponseObject(data)
@@ -95,7 +97,7 @@ const WebcamComponent = () => {
       clearInterval(interval)
       clearInterval(interval2)
     }
-  }, [sendImage])
+  }, [])
 
   const [currentGoal, setCurrentGoal] = useState(
     letters[Math.floor(Math.random() * letters.length)],

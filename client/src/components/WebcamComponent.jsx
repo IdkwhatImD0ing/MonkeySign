@@ -85,8 +85,6 @@ const WebcamComponent = () => {
     }, 1000 / 3)
     socket.on('response', (data) => {
       if (data.result === currentGoal) {
-        console.log(data.result)
-        console.log(currentGoal)
         setScore((prevScore) => prevScore + 1)
         setCurrentGoal(letters[Math.floor(Math.random() * letters.length)])
       } else {
@@ -134,21 +132,23 @@ const WebcamComponent = () => {
           </div>
 
           <div className="flex flex-col rounded-lg overflow-hidden mt-[12px]">
-            <Webcam
-              audio={false}
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              videoConstraints={videoConstraints}
-              mirrored={true}
-              className=""
-            />
-            <canvas id="canvas" className="mt-[-339px] z-10"></canvas>
-            {/* <button
+            <div className="relative flex w-full aspect-w-16 aspect-h-9">
+              <Webcam
+                audio={false}
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                videoConstraints={videoConstraints}
+                mirrored={true}
+                className=""
+              />
+              <canvas id="canvas" className="absolute top-0 left-0 z-10" />
+              {/* <button
               className="self-center bg-[#fcd9fc] hover:bg-[#db8fdd] border border-black rounded-lg px-8 py-4 mt-8"
               onClick={() => sendImage()}
             >
               send to backend
             </button> */}
+            </div>
           </div>
         </div>
       ) : (

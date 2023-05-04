@@ -1,10 +1,4 @@
-import * as tf from '@tensorflow/tfjs'
-
-const preprocess = (image) => {
-  const imageTensor = tf.browser.fromPixels(image)
-  //Print the shape of the image tensor
-  return imageTensor
-}
+importScripts('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js')
 
 class ASLInferrer {
   constructor() {
@@ -12,7 +6,7 @@ class ASLInferrer {
   }
 
   async loadModel() {
-    const modelUrl = '/aslQuantized/model.json'
+    const modelUrl = '/asl_js/model.json'
     this.model = await tf.loadGraphModel(modelUrl)
   }
 
@@ -29,4 +23,4 @@ class ASLInferrer {
   }
 }
 
-export default ASLInferrer
+self.ASLInferrer = ASLInferrer

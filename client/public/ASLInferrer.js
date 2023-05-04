@@ -1,10 +1,4 @@
-import * as tf from '@tensorflow/tfjs'
-
-const preprocess = (image) => {
-  const imageTensor = tf.browser.fromPixels(image)
-  //Print the shape of the image tensor
-  return imageTensor
-}
+importScripts('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js')
 
 class ASLInferrer {
   constructor() {
@@ -29,4 +23,4 @@ class ASLInferrer {
   }
 }
 
-export default ASLInferrer
+self.ASLInferrer = ASLInferrer

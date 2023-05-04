@@ -1,8 +1,6 @@
 import {useEffect, useState, useRef} from 'react'
 import Webcam from 'react-webcam'
-import ASLInferrer from './ASLInferrer'
 import * as handTrack from 'handtrackjs'
-import * as tf from '@tensorflow/tfjs'
 
 const letters = [
   'A',
@@ -33,8 +31,6 @@ const letters = [
   'Z',
 ]
 const model = await handTrack.load()
-const aslInferrer = new ASLInferrer()
-await aslInferrer.loadModel()
 
 const WebcamComponent = () => {
   const videoConstraints = {
@@ -62,90 +58,61 @@ const WebcamComponent = () => {
   const predRef = useRef([])
 
   // Game logic
-  const processing = useRef(false)
+  const processing = useRef(true)
   const canvasRef = useRef(null)
   const emptyImage = useRef(new Image())
   const image = useRef(new Image())
+  const workerRef = useRef(null)
 
   const predict = () => {
     if (!webcamRef.current) return
-    tf.tidy(() => {
-      const imageSrc = webcamRef.current.getScreenshot()
-      image.current.src = imageSrc
 
-      image.current.onload = () => {
-        model.detect(image.current).then((predictions) => {
-          if (predictions.length < 2) return
-          // Remove the prediction where class == 5
-          predictions = predictions.filter(
-            (prediction) => prediction.class != 5,
-          )
-          // Truncate it to 1 prediction
-          predictions = predictions.slice(0, 1)
-          predRef.current = predictions
+    const imageSrc = webcamRef.current.getScreenshot()
+    image.current.src = imageSrc
 
-          // Crop image based on bounding box [x,y,width,height]
-          const [x, y, width, height] = predictions[0].bbox
+    image.current.onload = () => {
+      model.detect(image.current).then((predictions) => {
+        if (predictions.length < 2) return
+        // Remove the prediction where class == 5
+        predictions = predictions.filter((prediction) => prediction.class != 5)
+        // Truncate it to 1 prediction
+        predictions = predictions.slice(0, 1)
+        predRef.current = predictions
 
-          // Convert the image to a tensor
-          const imageTensor = tf.browser.fromPixels(image.current)
+        // Drawing code
+        emptyImage.current.width = image.current.width
+        emptyImage.current.height = image.current.height
 
-          // Slice the tensor based on the bounding box coordinates
-          const croppedTensor = imageTensor.slice(
-            [Math.round(y), Math.round(x), 0],
-            [Math.round(height), Math.round(width), 3],
-          )
+        const context = canvasRef.current.getContext('2d')
+        predictions[0].label = responseObjectRef.current.result
+        predictions[0].score = responseObjectRef.current.confidence
+        model.renderPredictions(
+          predictions,
+          canvas,
+          context,
+          emptyImage.current,
+        )
+        // If the image is being processed, return
+        if (!processing.current) {
+          return
+        }
 
-          // Resize the tensor to 224x224
-          const resizedTensor = tf.image.resizeBilinear(
-            croppedTensor,
-            [224, 224],
-          )
-
-          // Reshape the tensor to 1x224x224x3
-          const reshapedTensor = resizedTensor.expandDims(0)
-          emptyImage.current.width = image.current.width
-          emptyImage.current.height = image.current.height
-
-          const context = canvasRef.current.getContext('2d')
-          predictions[0].label = responseObjectRef.current.result
-          predictions[0].score = responseObjectRef.current.confidence
-          model.renderPredictions(
-            predictions,
-            canvas,
-            context,
-            emptyImage.current,
-          )
-
-          if (processing.current) return
-          processing.current = true
-          aslInferrer.infer(reshapedTensor).then((prediction) => {
-            predictions[0].label = letters[prediction[0]]
-            predictions[0].score = prediction[1].toFixed(2)
-
-            // Game logic
-            if (predictions[0].label == currentGoal) {
-              setScore((prevScore) => prevScore + 1)
-              setCurrentGoal(
-                letters[Math.floor(Math.random() * letters.length)],
-              )
-            }
-
-            processing.current = false
-
-            setResponseObject((prevState) => {
-              const updatedState = {
-                ...prevState,
-                result: predictions[0].label,
-                confidence: predictions[0].score,
-              }
-              responseObjectRef.current = updatedState
-              return updatedState
-            })
-          })
+        // Create an ImageData object from the image source
+        const tempCanvas = document.createElement('canvas')
+        tempCanvas.width = image.current.width
+        tempCanvas.height = image.current.height
+        tempCanvas.getContext('2d').drawImage(image.current, 0, 0)
+        const imageData = tempCanvas
+          .getContext('2d')
+          .getImageData(0, 0, tempCanvas.width, tempCanvas.height)
+        // Send the data to the worker for processing
+        workerRef.current.postMessage({
+          type: 'infer',
+          imageData,
+          bbox: predictions[0].bbox,
         })
-      }
-    })
+      })
+    }
   }
 
   useEffect(() => {
@@ -169,6 +136,53 @@ const WebcamComponent = () => {
       return () => clearTimeout(timeout)
     }
   }, [timer])
+
+  // Set the processing to true every 1/3 of a second
+  useEffect(() => {
+    const interval = setInterval(() => (processing.current = true), 1000 / 3)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Initialize the worker when the component mounts
+  useEffect(() => {
+    workerRef.current = new Worker('worker.js')
+
+    workerRef.current.addEventListener('message', (event) => {
+      const {status, prediction} = event.data
+
+      if (status === 'success') {
+        const [predictionIndex, percentage] = prediction
+        const predictedLetter = letters[predictionIndex]
+        const predictedPercentage = percentage.toFixed(2)
+
+        // Game logic
+        if (predictedLetter == currentGoal) {
+          setScore((prevScore) => prevScore + 1)
+          setCurrentGoal(letters[Math.floor(Math.random() * letters.length)])
+        }
+
+        processing.current = false
+
+        setResponseObject((prevState) => {
+          const updatedState = {
+            ...prevState,
+            result: predictedLetter,
+            confidence: predictedPercentage,
+          }
+          responseObjectRef.current = updatedState
+          return updatedState
+        })
+      }
+    })
+
+    // Load the model in the worker when the component mounts
+    workerRef.current.postMessage({type: 'loadModel'})
+
+    // Clean up the worker when the component unmounts
+    return () => {
+      workerRef.current.terminate()
+    }
+  }, [])
 
   return (
     <div className="font-lexend-deca font-light">

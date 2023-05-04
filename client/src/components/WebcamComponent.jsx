@@ -1,10 +1,7 @@
-import {useEffect, useState, useRef, useCallback} from 'react'
+import {useEffect, useState, useRef} from 'react'
 import Webcam from 'react-webcam'
-import axios from 'axios'
-import {io} from 'socket.io-client'
+import ASLInferrer from './ASLInferrer'
 import * as handTrack from 'handtrackjs'
-
-const socket = io('http://localhost:8000')
 
 const letters = [
   'A',
@@ -35,6 +32,9 @@ const letters = [
   'Z',
 ]
 const model = await handTrack.load()
+const aslInferrer = new ASLInferrer()
+await aslInferrer.loadModel()
+
 const WebcamComponent = () => {
   const videoConstraints = {
     width: 1920,
@@ -45,12 +45,24 @@ const WebcamComponent = () => {
   const webcamRef = useRef(null)
   const predRef = useRef([])
 
-  const sendImage = () => {
+  const sendImage = async () => {
+    if (!webcamRef.current || !aslInferrer) return
     const imageSrc = webcamRef.current.getScreenshot()
-    socket.emit('send-frame', {
-      image: imageSrc,
-      predictions: predRef.current,
-    })
+    const image = new Image()
+    image.src = imageSrc
+
+    image.onload = async () => {
+      const [prediction, confidence] = await aslInferrer.infer(image)
+
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+      const responseObject = {
+        result: alphabet[prediction],
+        confidence: confidence,
+      }
+
+      // Process the responseObject as needed
+      // ...
+    }
   }
 
   const predict = () => {
@@ -60,8 +72,10 @@ const WebcamComponent = () => {
     image.src = imageSrc
     let canvas = document.getElementById('canvas')
     let context = canvas.getContext('2d')
+
     image.onload = () => {
       model.detect(image).then((predictions) => {
+        console.log('Predictions: ', predictions)
         // Remove the prediction where class == 5
         predictions = predictions.filter((prediction) => prediction.class != 5)
         // Truncate it to 1 prediction
@@ -79,18 +93,18 @@ const WebcamComponent = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       predict()
-    }, 1000 / 40)
+    }, 1000 / 30)
     const interval2 = setInterval(() => {
       sendImage()
     }, 1000 / 3)
-    socket.on('response', (data) => {
-      if (data.result === currentGoal) {
-        setScore((prevScore) => prevScore + 1)
-        setCurrentGoal(letters[Math.floor(Math.random() * letters.length)])
-      } else {
-        setResponseObject(data)
-      }
-    })
+    // socket.on('response', (data) => {
+    //   if (data.result === currentGoal) {
+    //     setScore((prevScore) => prevScore + 1)
+    //     setCurrentGoal(letters[Math.floor(Math.random() * letters.length)])
+    //   } else {
+    //     setResponseObject(data)
+    //   }
+    // })
     return () => {
       clearInterval(interval)
       clearInterval(interval2)

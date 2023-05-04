@@ -12,7 +12,7 @@ class ASLInferrer {
   }
 
   async loadModel() {
-    const modelUrl = '/asl_js/model.json'
+    const modelUrl = '/aslQuantized/model.json'
     this.model = await tf.loadGraphModel(modelUrl)
   }
 

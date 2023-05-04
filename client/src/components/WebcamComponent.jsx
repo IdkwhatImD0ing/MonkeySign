@@ -62,7 +62,7 @@ const WebcamComponent = () => {
   const predRef = useRef([])
 
   // Game logic
-  const processing = useRef(false)
+  const processing = useRef(true)
   const canvasRef = useRef(null)
   const emptyImage = useRef(new Image())
   const image = useRef(new Image())
@@ -84,6 +84,25 @@ const WebcamComponent = () => {
           predictions = predictions.slice(0, 1)
           predRef.current = predictions
 
+          // Drawing code
+          emptyImage.current.width = image.current.width
+          emptyImage.current.height = image.current.height
+
+          const context = canvasRef.current.getContext('2d')
+          predictions[0].label = responseObjectRef.current.result
+          predictions[0].score = responseObjectRef.current.confidence
+          model.renderPredictions(
+            predictions,
+            canvas,
+            context,
+            emptyImage.current,
+          )
+          // If the image is being processed, return
+          if (!processing.current) {
+            console.log('Skipped')
+            return
+          }
+
           // Crop image based on bounding box [x,y,width,height]
           const [x, y, width, height] = predictions[0].bbox
 
@@ -104,21 +123,7 @@ const WebcamComponent = () => {
 
           // Reshape the tensor to 1x224x224x3
           const reshapedTensor = resizedTensor.expandDims(0)
-          emptyImage.current.width = image.current.width
-          emptyImage.current.height = image.current.height
 
-          const context = canvasRef.current.getContext('2d')
-          predictions[0].label = responseObjectRef.current.result
-          predictions[0].score = responseObjectRef.current.confidence
-          model.renderPredictions(
-            predictions,
-            canvas,
-            context,
-            emptyImage.current,
-          )
-
-          if (processing.current) return
-          processing.current = true
           aslInferrer.infer(reshapedTensor).then((prediction) => {
             predictions[0].label = letters[prediction[0]]
             predictions[0].score = prediction[1].toFixed(2)
@@ -169,6 +174,11 @@ const WebcamComponent = () => {
       return () => clearTimeout(timeout)
     }
   }, [timer])
+
+  useEffect(() => {
+    const interval = setInterval(() => (processing.current = true), 1000 / 3)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="font-lexend-deca font-light">

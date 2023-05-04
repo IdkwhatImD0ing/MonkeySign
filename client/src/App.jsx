@@ -1,7 +1,7 @@
-import "./App.css";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Navbar } from "./components";
-import { Home, About, Play } from "./pages";
+import './App.css'
+import {BrowserRouter, Route, Routes} from 'react-router-dom'
+import {Navbar} from './components'
+import {Home, About, Play} from './pages'
 
 function App() {
   return (
@@ -16,7 +16,7 @@ function App() {
       </main>
       <img src="./corner.png" alt="corner" className="fixed bottom-0 z-[-10]" />
     </BrowserRouter>
-  );
+  )
 }
 
-export default App;
+export default App

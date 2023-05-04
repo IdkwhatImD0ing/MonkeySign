@@ -1,10 +1,8 @@
-import {useEffect, useState, useRef, useCallback} from 'react'
+import {useEffect, useState, useRef} from 'react'
 import Webcam from 'react-webcam'
-import axios from 'axios'
-import {io} from 'socket.io-client'
+import ASLInferrer from './ASLInferrer'
 import * as handTrack from 'handtrackjs'
-
-const socket = io('http://localhost:8000')
+import * as tf from '@tensorflow/tfjs'
 
 const letters = [
   'A',
@@ -35,6 +33,9 @@ const letters = [
   'Z',
 ]
 const model = await handTrack.load()
+const aslInferrer = new ASLInferrer()
+await aslInferrer.loadModel()
+
 const WebcamComponent = () => {
   const videoConstraints = {
     width: 1920,
@@ -42,60 +43,7 @@ const WebcamComponent = () => {
 
     facingMode: 'user',
   }
-  const webcamRef = useRef(null)
-  const predRef = useRef([])
-
-  const sendImage = () => {
-    const imageSrc = webcamRef.current.getScreenshot()
-    socket.emit('send-frame', {
-      image: imageSrc,
-      predictions: predRef.current,
-    })
-  }
-
-  const predict = () => {
-    if (!webcamRef.current) return
-    const imageSrc = webcamRef.current.getScreenshot()
-    const image = new Image()
-    image.src = imageSrc
-    let canvas = document.getElementById('canvas')
-    let context = canvas.getContext('2d')
-    image.onload = () => {
-      model.detect(image).then((predictions) => {
-        // Remove the prediction where class == 5
-        predictions = predictions.filter((prediction) => prediction.class != 5)
-        // Truncate it to 1 prediction
-        predictions = predictions.slice(0, 3)
-        predRef.current = predictions
-
-        const emptyImage = new Image()
-        emptyImage.width = image.width
-        emptyImage.height = image.height
-        model.renderPredictions(predictions, canvas, context, emptyImage)
-      })
-    }
-  }
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      predict()
-    }, 1000 / 40)
-    const interval2 = setInterval(() => {
-      sendImage()
-    }, 1000 / 3)
-    socket.on('response', (data) => {
-      if (data.result === currentGoal) {
-        setScore((prevScore) => prevScore + 1)
-        setCurrentGoal(letters[Math.floor(Math.random() * letters.length)])
-      } else {
-        setResponseObject(data)
-      }
-    })
-    return () => {
-      clearInterval(interval)
-      clearInterval(interval2)
-    }
-  }, [])
+  // State variables
 
   const [currentGoal, setCurrentGoal] = useState(
     letters[Math.floor(Math.random() * letters.length)],
@@ -104,15 +52,122 @@ const WebcamComponent = () => {
   const [timer, setTimer] = useState(30)
   const [score, setScore] = useState(0)
   const [responseObject, setResponseObject] = useState({
-    currentBox: null,
-    predicted: null,
-    accuracy: null,
+    predicted: 'Loading',
+    accuracy: 'Loading',
   })
+  const responseObjectRef = useRef(responseObject)
+
+  // Webcam and prediction
+  const webcamRef = useRef(null)
+  const predRef = useRef([])
+
+  // Game logic
+  const processing = useRef(false)
+  const canvasRef = useRef(null)
+  const emptyImage = useRef(new Image())
+  const image = useRef(new Image())
+
+  const predict = () => {
+    if (!webcamRef.current) return
+    tf.tidy(() => {
+      const imageSrc = webcamRef.current.getScreenshot()
+      image.current.src = imageSrc
+
+      image.current.onload = () => {
+        model.detect(image.current).then((predictions) => {
+          if (predictions.length < 2) return
+          // Remove the prediction where class == 5
+          predictions = predictions.filter(
+            (prediction) => prediction.class != 5,
+          )
+          // Truncate it to 1 prediction
+          predictions = predictions.slice(0, 1)
+          predRef.current = predictions
+
+          // Crop image based on bounding box [x,y,width,height]
+          const [x, y, width, height] = predictions[0].bbox
+
+          // Convert the image to a tensor
+          const imageTensor = tf.browser.fromPixels(image.current)
+
+          // Slice the tensor based on the bounding box coordinates
+          const croppedTensor = imageTensor.slice(
+            [Math.round(y), Math.round(x), 0],
+            [Math.round(height), Math.round(width), 3],
+          )
+
+          // Resize the tensor to 224x224
+          const resizedTensor = tf.image.resizeBilinear(
+            croppedTensor,
+            [224, 224],
+          )
+
+          // Reshape the tensor to 1x224x224x3
+          const reshapedTensor = resizedTensor.expandDims(0)
+          emptyImage.current.width = image.current.width
+          emptyImage.current.height = image.current.height
+
+          const context = canvasRef.current.getContext('2d')
+          predictions[0].label = responseObjectRef.current.result
+          predictions[0].score = responseObjectRef.current.confidence
+          model.renderPredictions(
+            predictions,
+            canvas,
+            context,
+            emptyImage.current,
+          )
+
+          if (processing.current) return
+          processing.current = true
+          aslInferrer.infer(reshapedTensor).then((prediction) => {
+            predictions[0].label = letters[prediction[0]]
+            predictions[0].score = prediction[1].toFixed(2)
+
+            // Game logic
+            if (predictions[0].label == currentGoal) {
+              setScore((prevScore) => prevScore + 1)
+              setCurrentGoal(
+                letters[Math.floor(Math.random() * letters.length)],
+              )
+            }
+
+            processing.current = false
+
+            setResponseObject((prevState) => {
+              const updatedState = {
+                ...prevState,
+                result: predictions[0].label,
+                confidence: predictions[0].score,
+              }
+              responseObjectRef.current = updatedState
+              return updatedState
+            })
+          })
+        })
+      }
+    })
+  }
 
   useEffect(() => {
-    timer > 0 &&
-      setTimeout(() => setTimer(timer - 1), 1000) &&
-      setTimeout(() => setGameStart(false), 31000)
+    const animationLoop = () => {
+      predict()
+      requestAnimationFrame(animationLoop)
+    }
+
+    animationLoop()
+
+    return () => {
+      cancelAnimationFrame(animationLoop)
+    }
+  }, [webcamRef, canvasRef])
+
+  useEffect(() => {
+    if (timer <= 0) {
+      setGameStart(false)
+    } else {
+      const timeout = setTimeout(() => setTimer(timer - 1), 1000)
+      return () => clearTimeout(timeout)
+    }
   }, [timer])
 
   return (
@@ -126,7 +181,7 @@ const WebcamComponent = () => {
               <div>Score: {score}</div>
             </div>
             <div className="flex justify-between px-[2px] w-full">
-              <div>Predicted Box: {responseObject.result}</div>
+              <div>Predicted: {responseObject.result}</div>
               <div>Accuracy: {responseObject.confidence}</div>
             </div>
           </div>
@@ -141,7 +196,11 @@ const WebcamComponent = () => {
                 mirrored={true}
                 className=""
               />
-              <canvas id="canvas" className="absolute top-0 left-0 z-10" />
+              <canvas
+                ref={canvasRef}
+                id="canvas"
+                className="absolute top-0 left-0 z-10"
+              />
               {/* <button
               className="self-center bg-[#fcd9fc] hover:bg-[#db8fdd] border border-black rounded-lg px-8 py-4 mt-8"
               onClick={() => sendImage()}
